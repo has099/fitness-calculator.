@@ -1,47 +1,72 @@
 import streamlit as st
 
-# ضبط إعدادات الصفحة
-st.set_page_config(page_title="حاسبة اللياقة الذكية", page_icon="🏋️‍♂️", layout="centered")
+st.set_page_config(page_title="المساعد الرياضي الشامل", page_icon="🏋️‍♂️", layout="centered")
 
-st.title("🏋️‍♂️ حاسبة السعرات واللياقة الذكية")
-st.write("أدخل بياناتك اليومية لمعرفة احتياجك من السعرات والبروتين والماء!")
+st.title("🏋️‍♂️ المساعد الرياضي وحاسبة اللياقة الشاملة")
+st.write("حاسبتك الذكية لتحديد السعرات، الماكروز، واحتياج الماء والتمارين!")
 
 st.divider()
 
-# المدخلات
-weight = st.number_input("الوزن (كغم):", min_value=30.0, max_value=200.0, value=70.0, step=0.5)
-height = st.number_input("الطول (سم):", min_value=100.0, max_value=220.0, value=170.0, step=1.0)
-age = st.number_input("العمر:", min_value=10, max_value=100, value=20)
-steps = st.number_input("عدد الخطوات اليومية تقريباً:", min_value=0, max_value=50000, value=8000, step=500)
+# المدخلات الأساسية
+col_in1, col_in2 = st.columns(2)
+with col_in1:
+    weight = st.number_input("الوزن (كغم):", min_value=30.0, max_value=200.0, value=70.0, step=0.5)
+    age = st.number_input("العمر:", min_value=10, max_value=100, value=20)
+with col_in2:
+    height = st.number_input("الطول (سم):", min_value=100.0, max_value=220.0, value=170.0, step=1.0)
+    steps = st.number_input("الخطوات اليومية:", min_value=0, max_value=50000, value=8000, step=500)
 
-goal = st.selectbox("ما هو هدفك الحالي؟", ["تنزيل وزن", "بناء عضلات", "المحافظة على الوزن"])
+goal = st.selectbox("🎯 ما هو هدفك الحالي؟", ["تنزيل وزن", "بناء عضلات", "المحافظة على الوزن"])
 
-if st.button("🚀 احسب النتائج الآن", type="primary"):
-    # حساب الحرق والاحتياج
+if st.button("🚀 احسب خطتك الكاملة", type="primary"):
+    # 1. الحسابات الأساسية
     bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5
     step_calories = (steps / 1000) * 40
     total_calories = bmr + step_calories
     
-    # حساب احتياج الماء والبروتين
-    water_liters = (weight * 0.033)
-    protein_grams = weight * 2.0  # 2 غرام لكل كغم
-    
-    st.success("تم الحساب بنجاح!")
-    
-    col1, col2 = st.columns(2)
-    col1.metric("حرق الجسم الأساسي", f"{round(bmr)} سعرة")
-    col2.metric("إجمالي الحرق اليومي", f"{round(total_calories)} سعرة")
-    
-    st.subheader("📊 الاحتياج اليومي المغذي:")
-    st.write(f"💧 **احتياجك اليومي من الماء:** حوالي `{round(water_liters, 1)} لتر`")
-    st.write(f"🥩 **البروتين اليومي الموصى به:** حوالي `{round(protein_grams)} غرام`")
-    
-    st.subheader("🎯 هدف السعرات اليومي:")
+    # تحديد السعرات حسب الهدف
     if goal == "تنزيل وزن":
-        target = total_calories - 400
-        st.warning(f"استهدف تناول: **{round(target)} سعرة حرارية** يومياً.")
+        target_calories = total_calories - 400
     elif goal == "بناء عضلات":
-        target = total_calories + 300
-        st.success(f"استهدف تناول: **{round(target)} سعرة حرارية** يومياً.")
+        target_calories = total_calories + 300
     else:
-        st.info(f"استهدف تناول: **{round(total_calories)} سعرة حرارية** يومياً.")
+        target_calories = total_calories
+
+    # 2. حساب الماكروز (التوزيع الغذائي)
+    protein_g = weight * 2.0                # 2g لكل كغم
+    fat_g = weight * 0.9                   # 0.9g دهون صحية لكل كغم
+    protein_cal = protein_g * 4
+    fat_cal = fat_g * 9
+    carb_cal = max(0, target_calories - (protein_cal + fat_cal))
+    carb_g = carb_cal / 4                  # المتبقي كربوهيدرات
+
+    # 3. احتساب الماء
+    water_l = weight * 0.033
+
+    st.success("✨ تم تجهيز خطتك الرياضية بنجاح!")
+
+    # عرض النتائج في بطاقات
+    c1, c2 = st.columns(2)
+    c1.metric("حرق الجسم الأساسي (BMR)", f"{round(bmr)} سعرة")
+    c2.metric("السعرات المستهدفة لهدفك", f"{round(target_calories)} سعرة")
+
+    st.divider()
+
+    # قسم الماكروز والماء
+    st.subheader("📊 توزيع الماكروز اليومي (Macronutrients)")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("🥩 بروتين", f"{round(protein_g)} غرام")
+    m2.metric("🍚 كربوهيدرات", f"{round(carb_g)} غرام")
+    m3.metric("🥑 دهون صحية", f"{round(fat_g)} غرام")
+    m4.metric("💧 ماء", f"{round(water_l, 1)} لتر")
+
+    st.divider()
+
+    # قسم النصائح والتمارين
+    st.subheader("💡 توصيات التغذية والتمارين لهدفك")
+    if goal == "تنزيل وزن":
+        st.warning("🔥 **خطة التنزيل:** ركّز على الأغذية الغنية بالبروتين والألياف لزيادة الشبع، واعتمد تمارين الكارديو (مشي، قفز حبل) مع تمارين المقاومة لحفظ العضلات.")
+    elif goal == "بناء عضلات":
+        st.success("💪 **خطة البناء:** اهتم بوجبة ما بعد التمرين (بروتين + كربوهيدرات معقدة)، وركز على تمارين الضغط، السكوات، والأوزان لزيادة الحجم العضلي.")
+    else:
+        st.info("⚖️ **خطة المحافظة:** حافظ على استقرار نشاطك اليومي ووازّن وجباتك بنفس النسب الموضحة أعلاه.")
